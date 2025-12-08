@@ -99,6 +99,8 @@
 										<th><xsl:value-of select="eas:i18n('Description')"/></th>
 										<th><xsl:value-of select="eas:i18n('Date')"/></th>
 										<th><xsl:value-of select="eas:i18n('Status')"/></th>
+										<!-- Added Decision Made By column -->
+										<th><xsl:value-of select="eas:i18n('Decision Made By')"/></th>
 										<th>&#160;</th>
 									</tr>
 								</thead>
@@ -112,6 +114,8 @@
 										<th><xsl:value-of select="eas:i18n('Description')"/></th>
 										<th><xsl:value-of select="eas:i18n('Date')"/></th>
 										<th><xsl:value-of select="eas:i18n('Status')"/></th>
+										<!-- Added Decision Made By column -->
+										<th><xsl:value-of select="eas:i18n('Decision Made By')"/></th>
 										<th>&#160;</th>
 									</tr>
 								</tfoot>
@@ -140,12 +144,13 @@
 							sort: true,
 							responsive: false,
 							columns: [
+								{ "width": "10%" },
 								{ "width": "15%" },
-								{ "width": "20%" },
-								{ "width": "35%" },
+								{ "width": "25%" },
 								{ "width": "10%" },
 								{ "width": "10%" },
-								{ "width": "10%","orderable": false }
+								{ "width": "15%" }, // Decision Made By column
+								{ "width": "15%","orderable": false }
 							  ],
 							dom: 'Bfrtip',
 							buttons: [
@@ -189,6 +194,8 @@
 		<!-- <xsl:variable name="comment" select="$commentary[name=current()/own_slot_value[slot_reference='name']/value]"/>-->
 		<xsl:variable name="thisstatus" select="$status[name = current()/own_slot_value[slot_reference = 'decision_result']/value]"></xsl:variable>
 		<xsl:variable name="thiselementStyle" select="$elementStyle[name = $thisstatus/own_slot_value[slot_reference = 'element_styling_classes']/value]"></xsl:variable>
+		<!-- Get decision maker actor for table display -->
+		<xsl:variable name="decisionActor" select="$allActors[name = current()/own_slot_value[slot_reference='decision_made_by_actor']/value]"/>
 		<tr>
 			<td>
 				<xsl:if test="string-length(current()/own_slot_value[slot_reference = 'governance_reference']/value) = 0">-</xsl:if>
@@ -212,6 +219,15 @@
 					<xsl:attribute name="style">background-color:<xsl:value-of select="$thiselementStyle/own_slot_value[slot_reference = 'element_style_colour']/value"></xsl:value-of>;color:<xsl:value-of select="$thiselementStyle/own_slot_value[slot_reference = 'element_style_text_colour']/value"></xsl:value-of></xsl:attribute>
 					<xsl:value-of select="$thisstatus/own_slot_value[slot_reference = 'enumeration_value']/value"></xsl:value-of>
 				</span>
+			</td>
+			<!-- Display decision maker name in table -->
+			<td>
+				<xsl:choose>
+					<xsl:when test="string-length($decisionActor/own_slot_value[slot_reference='name']/value) > 0">
+						<xsl:value-of select="$decisionActor/own_slot_value[slot_reference='name']/value"/>
+					</xsl:when>
+					<xsl:otherwise>-</xsl:otherwise>
+				</xsl:choose>
 			</td>
 			<td>
 				<button class="btn btn-sm btn-default" data-toggle="modal">
