@@ -20,9 +20,11 @@
 
 	<!-- END GENERIC CATALOGUE PARAMETERS -->
     <xsl:variable name="repYN"><xsl:choose><xsl:when test="$targetReportId"><xsl:value-of select="$targetReportId"/></xsl:when><xsl:otherwise></xsl:otherwise></xsl:choose></xsl:variable>
-
+    <xsl:variable name="thisReport" select="node()/simple_instance[type='Report'][own_slot_value[slot_reference='name']/value=('Core: Application Provider Catalogue as Table')]"></xsl:variable>
+	
 	<!-- START GENERIC CATALOGUE SETUP VARIABES -->
 	<xsl:variable name="targetReport" select="/node()/simple_instance[name = $targetReportId]"/>
+	<xsl:variable name="reportConfig" select="$thisReport/own_slot_value[slot_reference='report_supporting_config']/value"/>
 
 	<!-- END GENERIC PARAMETERS -->
 
@@ -201,7 +203,7 @@
 				<!-- ADD THE PAGE HEADING -->
 				<xsl:call-template name="Heading"></xsl:call-template>
 				<xsl:call-template name="ViewUserScopingUI"></xsl:call-template>
-				 	 
+	 	 	 
 				<!--ADD THE CONTENT-->
 				<div class="container-fluid">
 					<div class="row">
@@ -371,7 +373,10 @@ const apiDataSets = [
 ];
 
 Promise.all(
-    apiDataSets.map((url) => promise_loadViewerAPIData(url))
+    apiDataSets.map((url) => promise_loadViewerAPIData(url).catch(e => {
+        console.warn("Could not load API dataset: " + url);
+        return {}; 
+    }))
 )
 .then(function (responses) {
     //console.log("All data loaded");
@@ -405,6 +410,8 @@ Promise.all(
 		var table;
 		var dynamicAppFilterDefs=[];	 
 		var reportURL = '<xsl:value-of select="$targetReport/own_slot_value[slot_reference='report_xsl_filename']/value"/>';
+		var jsonConfig = '<xsl:value-of select="eas:renderJSText($reportConfig)"/>';
+		var colSettings;
 		var catalogueTable
 		$('document').ready(function () {
 			listFragment = $("#list-template").html();
@@ -450,16 +457,16 @@ Promise.all(
 							let linkClass = 'context-menu-' + linkMenuName;
 							let linkId = instance.id + 'Link';
 							let linkURL = reportURL;
-							instanceLink = '<button class="ebfw-confirm-instance-selection btn btn-default btn-xs right-15 aa"> ' + linkClass + '" href="' + linkHref + '" id="' + linkId + '&amp;xsl=' + linkURL + '"><i class="text-success fa fa-check-circle right-5"></i>Select1</button>'
+							instanceLink = '<button class="ebfw-confirm-instance-selection btn btn-default btn-xs right-15"> ' + linkClass + '" href="' + linkHref + '" id="' + linkId + '&amp;xsl=' + linkURL + '"><i class="text-success fa fa-check-circle right-5"></i>Select1</button>'
 			
 						} else if (instanceLink != null) {
 							let linkURL = reportURL;
 							let linkHref = '?XML=reportXML.xml&amp;PMA=' + instance.id + '&amp;cl=' + essLinkLanguage + '&amp;XSL=' + linkURL;
-							let linkClass = 'context-menu-' + linkMenuName;
+							let linkClass = ' context-menu-' + linkMenuName;
 
 							let linkId = instance.id + 'Link';
 						//	instanceLink = '<a href="' + linkHref + '" id="' + linkId + '">' + instance.name + '</a>';
-							instanceLink = '<button class="ebfw-confirm-instance-selection btn btn-default btn-xs right-15 bb" type="button" onclick="location.href=\'' + linkHref + '\'" id="' + linkId + '"><i class="text-success fa fa-check-circle right-5"></i>Select</button>'; 
+							instanceLink = '<button class="ebfw-confirm-instance-selection btn btn-default btn-xs right-15" type="button" onclick="location.href=\'' + linkHref + '\'" id="' + linkId + '"><i class="text-success fa fa-check-circle right-5"></i>Select</button>'; 
 			
 							
 		
@@ -482,7 +489,7 @@ Promise.all(
 		                let linkClass = 'context-menu-' + linkMenuName;
 		                let linkId = instance.id + 'Link';
 		                let linkURL = reportURL; 
-						instanceLink = '<button class="ebfw-confirm-instance-selection btn btn-default btn-xs right-15 cc' + linkClass + '" href="' + linkHref + '"  id="' + linkId + '&amp;xsl=' + linkURL + '"><i class="text-success fa fa-check-circle right-5"></i>Select</button>'
+						instanceLink = '<button class="ebfw-confirm-instance-selection btn btn-default btn-xs right-15 ' + linkClass + '" href="' + linkHref + '"  id="' + linkId + '&amp;xsl=' + linkURL + '"><i class="text-success fa fa-check-circle right-5"></i>Select</button>'
 			
 		                return instanceLink;
 		            }
@@ -567,14 +574,18 @@ let allAppArr = [];
 let workingArr = [];
 let svcArr = [];
 let lifecycleArr = [];
-var colSettings = [];
   showEditorSpinner('Fetching Data')
 Promise.all([
-    promise_loadViewerAPIData(viewAPIData),
-    promise_loadViewerAPIData(viewAPIDataSvc),
-    promise_loadViewerAPIData(viewAPIDataMart),
-    promise_loadViewerAPIData(viewAPIDataOrgs)
+    promise_loadViewerAPIData(viewAPIData).catch(e => { console.warn("Failed loading Base App Data from URL: " + viewAPIData); return { meta: [], filters: [], applications: [], apis: [], lifecycles: [] }; }),
+    promise_loadViewerAPIData(viewAPIDataSvc).catch(e => { console.warn("Failed loading Services Data from URL: " + viewAPIDataSvc); return { applications_to_services: [] }; }),
+    promise_loadViewerAPIData(viewAPIDataMart).catch(e => { console.warn("Failed loading App Mart Data from URL: " + viewAPIDataMart); return { applications: [] }; }),
+    promise_loadViewerAPIData(viewAPIDataOrgs).catch(e => { console.warn("Failed loading Stakeholder Data from URL: " + viewAPIDataOrgs); return { a2rs: [] }; })
 ]).then(function(responses) {
+    if(!responses || !responses[0] || !responses[0].meta) {
+        console.error("API response parsing failed or was aborted");
+        removeEditorSpinner();
+        return;
+    }
     meta = responses[0].meta;
     filters = responses[0].filters;
     workingArr = responses[0].applications;
@@ -649,6 +660,24 @@ Promise.all([
         })
     })
 
+	// Apply JSON configuration for column visibility
+	var config = {};
+	try {
+		if (jsonConfig &amp;&amp; jsonConfig !== '') {
+			config = JSON.parse(jsonConfig);
+		}
+	} catch (e) {
+		console.error("Error parsing jsonConfig", e);
+	}
+
+	if (config.tableConfig) {
+		colSettings.forEach(function(col) {
+			if (config.tableConfig.hasOwnProperty(col.data)) {
+				col.visible = config.tableConfig[col.data];
+			}
+		});
+	}
+
     lifecycleArr = responses[0].lifecycles;
     workingArr = [...workingArr, ...responses[0].apis];
     martApps = responses[2].applications;
@@ -672,10 +701,10 @@ Promise.all([
         let martMatch = martApps.find((e) => {
             return d.id == e.id;
         }); 
-		d['family'] = martMatch.family;
-        d['supplier'] = martMatch.supplier || '';
-        d['ea_reference'] = martMatch.ea_reference || '';
-        d['short_name'] = martMatch.short_name || '';
+		d['family'] = martMatch?.family || '';;
+        d['supplier'] = martMatch?.supplier || '';
+        d['ea_reference'] = martMatch?.ea_reference || '';
+        d['short_name'] = martMatch?.short_name || '';
         slotNames.forEach((s) => {
             if (d[s.id]) {
                 d[s.id] = getSlot(s.id, d[s.id])
