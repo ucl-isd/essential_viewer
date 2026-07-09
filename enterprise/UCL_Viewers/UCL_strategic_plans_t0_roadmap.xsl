@@ -45,7 +45,7 @@
 				<link href="js/vis/vis.css" rel="stylesheet" type="text/css"></link>
 				<style>
 					.view-wrapper{padding:20px;margin-top:70px}
-					#visualization{width:100%;height:500px;border:1px solid #ddd;border-radius:4px;margin-bottom:60px;overflow:hidden}
+					#visualization{width:100%;min-height:900px;border:1px solid #ddd;border-radius:4px;margin-bottom:60px;}
 				.roadmap-section{margin-bottom:80px;padding-bottom:40px}
 					.section-title{font-size:18px;font-weight:bold;color:#333;margin:30px 0 15px 0;padding-bottom:8px;border-bottom:2px solid #500778}
 					td,th{vertical-align:top !important}
@@ -61,7 +61,7 @@
 				<xsl:for-each select="$filteredPlans">
 					<xsl:sort select="own_slot_value[slot_reference = 'strategic_plan_valid_from_date_iso_8601']/value" order="ascending"></xsl:sort>
 					<xsl:variable name="pid" select="current()/name"></xsl:variable>
-					<xsl:variable name="pname" select="translate(current()/own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;)"></xsl:variable>
+					<xsl:variable name="pname" select="replace(translate(current()/own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;), '&amp;', 'and')"></xsl:variable>
 					<xsl:variable name="pstart" select="current()/own_slot_value[slot_reference = 'strategic_plan_valid_from_date_iso_8601']/value"></xsl:variable>
 					<xsl:variable name="pend" select="current()/own_slot_value[slot_reference = 'strategic_plan_valid_to_date_iso_8601']/value"></xsl:variable>
 					<xsl:variable name="pstatusInst" select="$allPlanningStatus[name = current()/own_slot_value[slot_reference = 'strategic_plan_status']/value]"></xsl:variable>
@@ -76,20 +76,20 @@
 					"startDate":"<xsl:value-of select="$pstart"/>",
 					"endDate":"<xsl:value-of select="$pend"/>",
 					"status":"<xsl:value-of select="$pstatus"/>",
-					"sponsors":[<xsl:for-each select="$thisActors">"<xsl:value-of select="translate(own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;)"/>"<xsl:if test="position() != last()">,</xsl:if></xsl:for-each>],
-					"objectives":[<xsl:for-each select="$thisObjs">{"id":"<xsl:value-of select="name"/>","name":"<xsl:value-of select="translate(own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;)"/>"}<xsl:if test="position() != last()">,</xsl:if></xsl:for-each>],
+					"sponsors":[<xsl:for-each select="$thisActors">"<xsl:value-of select="replace(translate(own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;), '&amp;', 'and')"/>"<xsl:if test="position() != last()">,</xsl:if></xsl:for-each>],
+					"objectives":[<xsl:for-each select="$thisObjs">{"id":"<xsl:value-of select="name"/>","name":"<xsl:value-of select="replace(translate(own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;), '&amp;', 'and')"/>"}<xsl:if test="position() != last()">,</xsl:if></xsl:for-each>],
 					"performanceMeasures":[<xsl:for-each select="$thisPMs">
 						<xsl:variable name="thisSQVs" select="$allSQValues[name = current()/own_slot_value[slot_reference = 'pm_performance_value']/value]"></xsl:variable>
-						{"name":"<xsl:value-of select="translate(current()/own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;)"/>",
+						{"name":"<xsl:value-of select="replace(translate(current()/own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;), '&amp;', 'and')"/>",
 						"date":"<xsl:value-of select="current()/own_slot_value[slot_reference = 'pm_measure_date_iso_8601']/value"/>",
 						"values":[<xsl:for-each select="$thisSQVs">
 							<xsl:variable name="thisSQ" select="$allServiceQualities[name = current()/own_slot_value[slot_reference = 'usage_of_service_quality']/value]"></xsl:variable>
-							{"quality":"<xsl:value-of select="translate($thisSQ/own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;)"/>",
-							"value":"<xsl:value-of select="translate(current()/own_slot_value[slot_reference = 'service_quality_value_value']/value, '&quot;', &quot;&apos;&quot;)"/>",
+							{"quality":"<xsl:value-of select="replace(translate($thisSQ/own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;), '&amp;', 'and')"/>",
+							"value":"<xsl:value-of select="replace(translate(current()/own_slot_value[slot_reference = 'service_quality_value_value']/value, '&quot;', &quot;&apos;&quot;), '&amp;', 'and')"/>",
 							"score":"<xsl:value-of select="current()/own_slot_value[slot_reference = 'service_quality_value_score']/value"/>"}<xsl:if test="position() != last()">,</xsl:if>
 						</xsl:for-each>]}<xsl:if test="position() != last()">,</xsl:if>
 					</xsl:for-each>],
-					"dependsOnPlans":[<xsl:for-each select="$dependsOnPlans">"<xsl:value-of select="translate(own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;)"/>"<xsl:if test="position() != last()">,</xsl:if></xsl:for-each>]
+					"dependsOnPlans":[<xsl:for-each select="$dependsOnPlans">"<xsl:value-of select="replace(translate(own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;), '&amp;', 'and')"/>"<xsl:if test="position() != last()">,</xsl:if></xsl:for-each>]
 					}<xsl:if test="position() != last()">,</xsl:if>
 				</xsl:for-each>
 				]};
@@ -141,7 +141,11 @@
 						showMajorLabels: true,
 						showMinorLabels: true,
 						zoomKey: 'ctrlKey',
-						tooltip: { followMouse: true, overflowMethod: 'cap' }
+						autoResize: true,
+						verticalScroll: false,
+						tooltip: { followMouse: true, overflowMethod: 'cap' },
+						start: items.reduce(function(min, i){ return i.start &lt; min ? i.start : min; }, items[0].start),
+						end: items.reduce(function(max, i){ return i.end &gt; max ? i.end : max; }, items[0].end)
 					};
 
 					new vis.Timeline(
@@ -150,6 +154,9 @@
 						new vis.DataSet(groupArr),
 						options
 					);
+					console.log('Groups:', JSON.stringify(groupArr));
+					console.log('All items:', JSON.stringify(items));
+					console.log('Plan objectives check:', viewData.plans.map(function(p){ return p.name + ' -> ' + JSON.stringify(p.objectives); }));
 				}
 
 				function renderTable(){
