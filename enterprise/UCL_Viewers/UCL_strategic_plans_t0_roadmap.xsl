@@ -49,9 +49,15 @@
 				.roadmap-section{margin-bottom:80px;padding-bottom:40px}
 					.section-title{font-size:18px;font-weight:bold;color:#333;margin:30px 0 15px 0;padding-bottom:8px;border-bottom:2px solid #500778}
 					td,th{vertical-align:top !important}
+					td:first-child{max-width:300px;width:25%}
+					td:not(:first-child){font-size:12px}
 					.pm-list,.sp-list{margin:0;padding-left:16px}
 					.pm-item{margin-bottom:4px}
 					.pm-value{display:inline-block;background:#eee;border-radius:3px;font-size:inherit;padding:1px 6px;margin-left:4px;color:#333}
+					.plan-desc{font-size:12px;font-weight:normal;color:#555;margin-top:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical}
+					.plan-desc.expanded{-webkit-line-clamp:unset;display:block}
+					.desc-toggle{font-size:11px;color:#500778;cursor:pointer;margin-top:3px;display:inline-block}
+					.desc-toggle:hover{text-decoration:underline}
 					.vis-item{border-color:#500778 !important;background-color:#c8b2d8 !important;color:#333 !important;font-size:12px !important}
 					.vis-item.vis-selected{border-color:#500778 !important;background-color:#500778 !important;color:#fff !important}
 					.vis-label{font-size:13px;font-weight:bold;color:#500778}
@@ -62,6 +68,7 @@
 					<xsl:sort select="own_slot_value[slot_reference = 'strategic_plan_valid_from_date_iso_8601']/value" order="ascending"></xsl:sort>
 					<xsl:variable name="pid" select="current()/name"></xsl:variable>
 					<xsl:variable name="pname" select="replace(translate(current()/own_slot_value[slot_reference = 'name']/value, '&quot;', &quot;&apos;&quot;), '&amp;', 'and')"></xsl:variable>
+					<xsl:variable name="pdesc" select="replace(replace(translate(current()/own_slot_value[slot_reference = 'description']/value, '&quot;&#xA;&#xD;', &quot;&apos;  &quot;), '&amp;', 'and'), '\\', '/')"></xsl:variable>
 					<xsl:variable name="pstart" select="current()/own_slot_value[slot_reference = 'strategic_plan_valid_from_date_iso_8601']/value"></xsl:variable>
 					<xsl:variable name="pend" select="current()/own_slot_value[slot_reference = 'strategic_plan_valid_to_date_iso_8601']/value"></xsl:variable>
 					<xsl:variable name="pstatusInst" select="$allPlanningStatus[name = current()/own_slot_value[slot_reference = 'strategic_plan_status']/value]"></xsl:variable>
@@ -73,6 +80,7 @@
 					<xsl:variable name="dependsOnPlans" select="$allESPs[name = current()/own_slot_value[slot_reference = 'depends_on_strategic_plans']/value]"></xsl:variable>
 					{"id":"<xsl:value-of select="$pid"/>",
 					"name":"<xsl:value-of select="$pname"/>",
+					"description":"<xsl:value-of select="$pdesc"/>",
 					"startDate":"<xsl:value-of select="$pstart"/>",
 					"endDate":"<xsl:value-of select="$pend"/>",
 					"status":"<xsl:value-of select="$pstatus"/>",
@@ -164,9 +172,14 @@
 					if(plans.length === 0){ return; }
 					var html = '&lt;table class="table table-bordered table-striped table-hover"&gt;';
 					html += '&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Plan Name&lt;/th&gt;&lt;th&gt;Status&lt;/th&gt;&lt;th&gt;Start Date&lt;/th&gt;&lt;th&gt;End Date&lt;/th&gt;&lt;th&gt;Sponsors&lt;/th&gt;&lt;th&gt;Performance Measures&lt;/th&gt;&lt;th&gt;Supports Plans&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;';
-					plans.forEach(function(plan){
+					plans.forEach(function(plan, idx){
 						html += '&lt;tr&gt;';
-						html += '&lt;td&gt;&lt;strong&gt;' + plan.name + '&lt;/strong&gt;&lt;/td&gt;';
+						html += '&lt;td&gt;&lt;strong&gt;' + plan.name + '&lt;/strong&gt;';
+						if(plan.description){
+							html += '&lt;div class="plan-desc" id="desc-' + idx + '"&gt;' + plan.description + '&lt;/div&gt;';
+							html += '&lt;span class="desc-toggle" onclick="toggleDesc(' + idx + ')"&gt;Show more&lt;/span&gt;';
+						}
+						html += '&lt;/td&gt;';
 						html += '&lt;td&gt;' + (plan.status || '-') + '&lt;/td&gt;';
 						html += '&lt;td&gt;' + (plan.startDate || '-') + '&lt;/td&gt;';
 						html += '&lt;td&gt;' + (plan.endDate || '-') + '&lt;/td&gt;';
@@ -193,6 +206,18 @@
 					});
 					html += '&lt;/tbody&gt;&lt;/table&gt;';
 					document.getElementById('tableContent').innerHTML = html;
+				}
+
+				function toggleDesc(idx){
+					var el = document.getElementById('desc-' + idx);
+					var toggle = el.nextElementSibling;
+					if(el.classList.contains('expanded')){
+						el.classList.remove('expanded');
+						toggle.textContent = 'Show more';
+					} else {
+						el.classList.add('expanded');
+						toggle.textContent = 'Show less';
+					}
 				}
 				</script>
 			</head>
