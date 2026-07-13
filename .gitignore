@@ -1,0 +1,6 @@
+# Local MCP server build
+essential-view-builder-mcp/
+
+# Temporary files created during MCP setup
+test-mcp.json
+run-essential-mcp.bat
